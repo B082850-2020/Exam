@@ -8,6 +8,9 @@ import string
 import glob
 from Bio.Seq import Seq
 
+import pandas as pd
+from Bio import SeqIO
+
 from Bio import Entrez
 
 
@@ -143,6 +146,26 @@ def search(organism,gene,db,complete):
 				print("\n Thank you for searching! Bye! \n")
 				quit()				
 
+def species_number(organism):
+	dow_file_name = '_'.join(organism.split())
+	# only carry on if the file exists
+	if os.path.isfile(dow_file_name + ".prot.fa"):
+		# read downloaded sequences
+		file_contents = open(dow_file_name + ".prot.fa").read()
+		# sequence number count 
+		count = file_contents.count('>')
+		# count unique species number, using regex to find all the text with [] around
+		spe = list(set(re.findall('\[.*?\]',file_contents)))
+		genus = list(set(re.findall('\[\w*',file_contents)))
+		# if more than one species in the downloaded file do following
+		if len(spe) >1:
+			#print species count and ask if user want to continue or not
+			print("\n Sequences are from " + str(len(genus))+ " different genera and there are " + str(len(spe)) + " different species in total. Do you wish to continue? \n")
+			answer = input(" Please respond yes or no. ")
+		else:
+			print("\n Sequences are from the same species " + str(spe) + ". ")
+			
+
 def blastdb(organism,gene,db,complete):
 	dow_file_name = '_'.join(organism.split())
 	if os.path.isfile(dow_file_name + ff):
@@ -161,6 +184,36 @@ def blastdb(organism,gene,db,complete):
 				if os.path.isfile(dow_file_name + ".phr"):
 					print(" Protein database has been successfully made! \n Protein sequence headers are in " + dow_file_name + ".phr \n Protein indexes are in " + dow_file_name + ".pin \n Compressed protein sequences are in " + dow_file_name + ".psq \n")
 
-
+def blast(organism,gene,db,complete):
+	dow_file_name = '_'.join(organism.split())
+	if os.path.isfile(dow_file_name + ".nhr") or os.path.isfile(dow_file_name + ".phr"):
+		blast_in = input(" Do you wish to do BLAST within the downloaded search results to find the most similar sequences?)
+		if yes_no(input):
+			if ff == ".nuc.fa":
+				records = SeqIO.parse("./"+ dow_file_name + ".nuc.fa","fasta")
+				for i in records:
+					acc = i.id
+					single_seq = open('single_seq.fasta', 'w')
+					single_seq.write(i.seq)
+					single_seq.close()
+					blastn = "blastn -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >>blast.out"	
+					subprocess.call(blastn,shell=True)
+					grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out >> blast.tsv"
+					subprocess.call(grep,shell=True)
+					change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
+					subprocess.call(change,shell=True)
+				df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+				df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+				df1.sort_values(['e_value','bit score'], ascending=False, inplace=True)
+				df1.to_csv(r'./hitresult.csv',sep='\t')
+				if df1:
+					print(" Dataframe containing all hit results is ready in hitresult.csv ")
+			else:
+				print(" Protein BLAST analysis can be done similarly as nucleotide but using blastp instead of blastn"
+			
+		print(" Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.")
+		
 search(*list(details.values()))
+species_number(list(details.values())[0])
 blastdb(*list(details.values()))
+blast(*list(details.values()))
