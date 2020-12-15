@@ -2,12 +2,8 @@
 
 import os, sys, subprocess, shutil
 import re
-import numpy as np
-from pandas.core.common import flatten
 import string
-import glob
 from Bio.Seq import Seq
-
 import pandas as pd
 from Bio import SeqIO
 
@@ -19,6 +15,7 @@ details["organism"]   = input(" Which organism do you want to make a BLAST datab
 details["gene"]   = input("\n Which gene do you want to search for? (leave empty if no specific gene is wanted) ")
 details["db"]    = input("\n Do you want to make a BLAST database for protein or nucleotide?\n Please answer p or n ")
 details["complete"] = input ("\n Do you want to include partial/incomplete result?\n Please answer yes or no ")
+
 
 ## yes and no function which return True or False to use for conditions 
 def yes_no(answer):
@@ -35,6 +32,7 @@ def yes_no(answer):
 			print ("\n Please respond with 'yes' or 'no' \n")
 			choice = input(" yes or no?").lower()
 
+
 ## function which return True or False to use for conditions 
 def protein_nt(answer):
 	prot = set(['protein','p'])		# protein and p are put into a set; both protein or p will return True
@@ -50,6 +48,7 @@ def protein_nt(answer):
 			print ("\n Please respond with 'p' or 'n' \n")
 			choice = input(" protein or nucleotide?").lower()
 			
+
 # pass the library values variables
 organism,gene,db,complete = list(details.values())
 
@@ -104,6 +103,7 @@ else:		# if gene is not empty
 			ef = "|efetch -db nucleotide -format fasta"
 			ff = ".nuc.fa"
 
+# search function to search and download sequences
 def search(organism,gene,db,complete):
 	if es:
 		es_number = es + "|grep -i \"count\"|awk \'{split($0,a,\"<|>\");print a[3];}\'" 		# grep and awk to get esearch result number
@@ -145,6 +145,7 @@ def search(organism,gene,db,complete):
 				print("\n Thank you for searching! Bye! \n")
 				quit()				
 
+
 ## function to check how many species there are if protein sequences were downloaded
 def species_number(organism):
 	# file name 
@@ -168,6 +169,7 @@ def species_number(organism):
 		else:
 			print("\n Sequences are from the same species " + str(spe[0].strip("[]")) + ". ")
 			
+
 ##function to make blast database
 def blastdb(organism,gene,db,complete):
 	# downloaded file name
@@ -198,6 +200,7 @@ def blastdb(organism,gene,db,complete):
 		#  user does not want a database
 		else:
 			print("\n Sorry to know that you do not want a database. Bye! \n") 
+
 
 ## function to do blast analysis			
 def blast(organism,gene,db,complete):
@@ -248,7 +251,11 @@ def blast(organism,gene,db,complete):
 					df1.to_csv(r'./hitresult.csv',sep='\t')
 					# check df1 is changed and print success messages
 					if df1 is not None:
-						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity of sequences is the highest at the top. \n")
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file. The similarity of sequences is the highest at the top. \n")
+						print("\n Showing first 10 lines of the hitresult.csv file: \n ")
+						# show first 10 lines of the blast output
+						show = " head -n10 hitresult.csv "
+						subprocess.call(show,shell=True)				
 				# user input for top hit number is valid
 				else:
 					print("\n Processing blastn analysis... Please wait....\n ") 
@@ -279,7 +286,11 @@ def blast(organism,gene,db,complete):
 					df1.to_csv(r'./hitresult.csv',sep='\t')
 					# check df1 is changed and print success messages
 					if df1 is not None:
-						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file. The similarity is the highest for comparison sequences at the top. \n")
+						print("\n Showing first 10 lines of the hitresult.csv file: \n ")
+						# show first 10 lines of the blast output
+						show = " head -n10 hitresult.csv "
+						subprocess.call(show,shell=True)
 			# if protein database made
 			else:
 				print("\n Protein BLAST analysis can be done similarly as nucleotide but using blastp instead of blastn \n")
@@ -318,7 +329,11 @@ def blast(organism,gene,db,complete):
 					df1.to_csv(r'./hitresult.csv',sep='\t')
 					# check df1 is changed and print success messages
 					if df1 is not None:
-						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity of sequences is the highest at the top. \n")
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file. The similarity of sequences is the highest at the top. \n")
+						print("\n Showing first 10 lines of the hitresult.csv file: \n ")
+						# show first 10 lines of the blast output
+						show = " head -n10 hitresult.csv "
+						subprocess.call(show,shell=True)
 				# user input for top hit number is valid
 				else:
 					print("\n Processing blastp analysis... Please wait....\n ") 
@@ -349,12 +364,18 @@ def blast(organism,gene,db,complete):
 					df1.to_csv(r'./hitresult.csv',sep='\t')
 					# check df1 is changed and print success messages
 					if df1 is not None:
-						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")			
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file. The similarity is the highest for comparison sequences at the top. \n")			
+						print("\n Showing first 10 lines of the hitresult.csv file: \n ")
+						# show first 10 lines of the blast output
+						show = " head -n10 hitresult.csv "
+						subprocess.call(show,shell=True)		
+
 		
 		# ask user if they wish to use local sequence for blast	
-		blast_ex = input("\n------\n Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.\n Please answer yes or no ")
+		answer = input("\n------\n Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.\n Please answer yes or no ")
 		# yes_not function; if yes, carry on
-		if yes_no(blast_ex):
+		if yes_no(answer):
+			blast_ex = input("\n What is you local file name? Please note the file has to be in the same directory where script is running. \n ")
 			# check the end of the file name for file format
 			if blast_ex.endswith(('fasta','fa')):
 				# check the file exists in the same directory as the script
@@ -373,9 +394,15 @@ def blast(organism,gene,db,complete):
 							# if contains protein sequences
 							if protein_nt(p_or_n):
 								print("\n Your protein sequences will be blast against the nucleotide database using tblastn \n ")
+								#### similar to above
+								#### skipped for easier reading
+								
 							# contains nucleotides 	
 							else:
 								print("\n Your nucleotide sequences will be blast against the nucleotide database using blastn \n ")
+								#### similar to above
+								#### skipped for easier reading
+																
 						# no sequence found in the file, error message
 						else:
 							print("\n There is no sequence in your file. Analysis cannot be done, sorry! \n ")
@@ -393,9 +420,15 @@ def blast(organism,gene,db,complete):
 							# if contains protein sequences
 							if protein_nt(p_or_n):
 								print("\n Your protein sequences will be blast against the protein database using blastp \n ")
+								#### similar to above
+								#### skipped for easier reading
+								
 							# contains nucleotides 	
 							else:
 								print("\n Your nucleotide sequences will be blast against the protein database using blastx \n ")
+								#### similar to above
+								#### skipped for easier reading
+								
 						# no sequence found in the file, error message
 						else:
 							print("\n There is no sequence in your file. Analysis cannot be done, sorry! \n ")							
@@ -418,3 +451,4 @@ species_number(list(details.values())[0])
 blastdb(*list(details.values()))
 # call blast analysis function and pass multiple arguments from dictionary 
 blast(*list(details.values()))
+
