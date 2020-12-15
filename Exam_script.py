@@ -205,33 +205,51 @@ def blast(organism,gene,db,complete):
 	dow_file_name = '_'.join(organism.split())
 	# only carry on if a database is made
 	if os.path.isfile(dow_file_name + ".nhr") or os.path.isfile(dow_file_name + ".phr"):
-		blast_in = input("\n------\n Do you wish to do BLAST within the downloaded search results to find the most similar sequences?\n Please answer yes or no ")
+		# ask user for input
+		blast_in = input("\n------\n Do you wish to do BLAST for downloaded search results to find the most similar sequences?\n Please answer yes or no ")
+		# yes_no function , carry on if yes
 		if yes_no(blast_in):
+			# if nucleotide database made
 			if ff == ".nuc.fa":
+				# read the downloaded sequence using biopython 
 				records = SeqIO.parse("./"+ dow_file_name + ".nuc.fa","fasta")
+				# ask user for restriction for output
 				hit_number = input("\n How many top hits would you like for each sequence? ")
+				# check if user input is invalid e.g 0 or white space or not a digit
 				if str(hit_number) == '0' or str.isspace(str(hit_number)) or str(hit_number).isdigit()== False:
 					print("\n The input is invalid. Resetting value to 10... \n")
 					print("\n Processing blastn analysis... Please wait....\n ") 
+					# reset the value to 10
 					hit_number = 10 
+					# loop over the downloaded file
 					for i in records:
-						acc = i.id
-						single_seq = open('single_seq.fasta', 'w')
-						single_seq.write(str(i.seq))
-						single_seq.close()
+						acc = i.id	# accessions are ids of records
+						single_seq = open('single_seq.fasta', 'w')	# open a new file and write; next loop will overwrite the file 
+						single_seq.write(str(i.seq))	# write a single sequence into the file
+						single_seq.close()	# close the file connection
+						# nucleotide sequence against nucleotide database use blastn
 						blastn = "blastn -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >> blast.out"	
+						# call shell to do the blast 
 						subprocess.call(blastn,shell=True)
+						# trim all lines with '#' or self hit, then take the top 10 hit and write into a tsv file 
 						grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out | head -n" + str(hit_number) + ">> blast.tsv"
 						subprocess.call(grep,shell=True)
+						# replace the query with accession of the query sequence
 						change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
 						subprocess.call(change,shell=True)
+					# set df1 to none type for later to check for change
 					df1 = None
+					# read tsv to df1 with no header and tab-delimiter  
 					df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+					# set header
 					df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+					# reorder the data frame by e-value and bit score
 					df1.sort_values(['e_value','bit score'], ascending=True, inplace=True)
 					df1.to_csv(r'./hitresult.csv',sep='\t')
+					# check df1 is changed and print success messages
 					if df1 is not None:
 						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity of sequences is the highest at the top. \n")
+				# user input for top hit number is valid
 				else:
 					print("\n Processing blastn analysis... Please wait....\n ") 
 					for i in records:
@@ -252,6 +270,7 @@ def blast(organism,gene,db,complete):
 					df1.to_csv(r'./hitresult.csv',sep='\t')
 					if df1 is not None:
 						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")
+			# if protein database made
 			else:
 				print("\n Protein BLAST analysis can be done similarly as nucleotide but using blastp instead of blastn \n")
 				records = SeqIO.parse("./"+ dow_file_name + ".prot.fa","fasta")
