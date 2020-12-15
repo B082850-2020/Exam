@@ -350,41 +350,71 @@ def blast(organism,gene,db,complete):
 					# check df1 is changed and print success messages
 					if df1 is not None:
 						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")			
-			
+		
+		# ask user if they wish to use local sequence for blast	
 		blast_ex = input("\n------\n Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.\n Please answer yes or no ")
+		# yes_not function; if yes, carry on
 		if yes_no(blast_ex):
+			# check the end of the file name for file format
 			if blast_ex.endswith(('fasta','fa')):
+				# check the file exists in the same directory as the script
 				if os.path.isfile('./' + blast_ex): 
+					# if nucleotide database
 					if ff == ".nuc.fa":
 						print("\n Your local file will be blast against the nucleotide database made in earlier step.\n")
+						# read user file 
 						file_contents = open(blast_ex).read()
+						# count sequence number in the file
 						count = file_contents.count('>')
-						print("\n File loaded successfully, your file contains " + count + " sequences \n " )
-						p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
-						if protein_nt(p_or_n):
-							print("\n Your protein sequences will be blast against the nucleotide database using tblastn \n ")
-							
+						if int(count) > 0:
+							print("\n File loaded successfully, your file contains " + count + " sequences \n " )
+							# ask user if the file contains nucleotide sequences or protein sequences
+							p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
+							# if contains protein sequences
+							if protein_nt(p_or_n):
+								print("\n Your protein sequences will be blast against the nucleotide database using tblastn \n ")
+							# contains nucleotides 	
+							else:
+								print("\n Your nucleotide sequences will be blast against the nucleotide database using blastn \n ")
+						# no sequence found in the file, error message
 						else:
-							print("\n Your nucleotide sequences will be blast against the nucleotide database using blastn \n ")
-							
+							print("\n There is no sequence in your file. Analysis cannot be done, sorry! \n ")
+					# if protein database
 					else:
 						print("\n Your local file will be blast against the protein database made in earlier step.\n")
+						# read user file
 						file_contents = open(blast_ex).read()
+						# count sequence number in the file
 						count = file_contents.count('>')
-						print("\n File loaded successfully, your file contains " + count + " sequences \n ")
-						p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
-						if protein_nt(p_or_n):
-							print("\n Your protein sequences will be blast against the protein database using blastp \n ")
-							
+						if int(count) > 0:
+							print("\n File loaded successfully, your file contains " + count + " sequences \n ")
+							# ask user if the file contains nucleotide sequences or protein sequences
+							p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
+							# if contains protein sequences
+							if protein_nt(p_or_n):
+								print("\n Your protein sequences will be blast against the protein database using blastp \n ")
+							# contains nucleotides 	
+							else:
+								print("\n Your nucleotide sequences will be blast against the protein database using blastx \n ")
+						# no sequence found in the file, error message
 						else:
-							print("\n Your nucleotide sequences will be blast against the protein database using blastx \n ")
-							
+							print("\n There is no sequence in your file. Analysis cannot be done, sorry! \n ")							
+				# file not in the directory, error message
 				else:
 					print("\n Your file is not in the same directory with the script. Analysis cannot be done, sorry! \n ")  	
+			# file has wrong format, error message 
 			else:
 				print("\n The file is wrong format. Analysis cannot be done, sorry! \n ")
+		# user do not want to use this function
+		else:
+			print("\n Thank you for searching! Bye! \n")
+			quit()
 
+# call search function and pass multiple arguments from dictionary 
 search(*list(details.values()))
+# call function to count the species number if protein sequences are downloaded; pass the first argument of the dictionary to the function
 species_number(list(details.values())[0])
+# call blast make database function and pass multiple arguments from dictionary 
 blastdb(*list(details.values()))
+# call blast analysis function and pass multiple arguments from dictionary 
 blast(*list(details.values()))
