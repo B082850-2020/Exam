@@ -23,7 +23,7 @@ details["complete"] = input ("\n Do you want to include partial/incomplete resul
 ## yes and no function which return True or False to use for conditions 
 def yes_no(answer):
 	yes = set(['yes','y'])		# yes and y are put into a set; both yes or y will return True
-	no = set(['no','n']) 		# both no or n will return False
+	no = set(['no','n']) 		# no and n are put into a set; both no or n will return False
 	choice = answer.lower()		# set all types of answer to lower case
 	# loop forever until something is returned
 	while True:		
@@ -37,16 +37,16 @@ def yes_no(answer):
 
 ## function which return True or False to use for conditions 
 def protein_nt(answer):
-	prot = set(['protein','p'])		# both protein or p will return True
-	nucl = set(['nucleotide','n']) 		# both nucleotide or n will return False
+	prot = set(['protein','p'])		# protein and p are put into a set; both protein or p will return True
+	nucl = set(['nucleotide','n']) 		# nucleotide and n are put into a set; both nucleotide or n will return False
 	choice = answer.lower()		# set all types of answer to lower case
 	# loop forever until something is returned
 	while True:		
-		if choice in prot:		# both yes or y will return True
+		if choice in prot:		# both protein or p will return True
 			return True
-		elif choice in nucl:		# both no or n will return False
+		elif choice in nucl:		# both nucleotide or n will return False
 			return False
-		else:					# error trap, all other input will cause the function to ask "yes or no" over and over until a desired answer is received
+		else:					# error trap, all other input will cause the function to ask "p or n" over and over until a desired answer is received
 			print ("\n Please respond with 'p' or 'n' \n")
 			choice = input(" protein or nucleotide?").lower()
 			
@@ -54,51 +54,51 @@ def protein_nt(answer):
 organism,gene,db,complete = list(details.values())
 
 # check user inputs are valid and define the search term
-if len(organism)==0 or str.isspace(organism):
-	print("\n Sorry, no organism was chosen, please try again..\n") 
-elif len(gene)==0 or str.isspace(gene):
+if len(organism)==0 or str.isspace(organism):		# check organism is not empty or spaces 
+	print("\n Sorry, no organism was chosen, please try again..\n") 	# error message; error trap
+elif len(gene)==0 or str.isspace(gene):				# check if gene is empty 
 	print("\n Ok, no specific gene will be searched for. \n")
-	if protein_nt(db): 
-		if yes_no(complete):
+	if protein_nt(db): 		# if user choose protein database
+		if yes_no(complete):		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tDatabase: protein","\n\tInclude partial/incomplete: Yes")
-			es = "esearch -db protein -query \" "+ organism +"[organism] \" "
-			ef = "|efetch -db protein -format fasta"
-			ff = ".prot.fa"
-		else:
+			es = "esearch -db protein -query \" "+ organism +"[organism] \" "		# prepare for esearch
+			ef = "|efetch -db protein -format fasta"		# prepare for efetch
+			ff = ".prot.fa"		# prepare for output file name 
+		else:		# if user choose to not include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tDatabase: protein","\n\tInclude partial/incomplete: No")
 			es = "esearch -db protein -query \" "+ organism +"[organism] Not partial \" "
 			ef = "|efetch -db protein -format fasta"
 			ff = ".prot.fa"
-	else:
-		if yes_no(complete):
+	else: 		# if user choose nucleotide database
+		if yes_no(complete):		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tDatabase: nucleotide","\n\tInclude partial/incomplete: Yes")
 			es = "esearch -db nucleotide -query \" "+ organism +"[organism] \" "
 			ef = "|efetch -db nucleotide -format fasta"
 			ff = ".nuc.fa"
-		else:
+		else:		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tDatabase: nucleotide","\n\tInclude partial/incomplete: No")
 			es = "esearch -db nucleotide -query \" "+ organism +"[organism] Not partial \" "
 			ef = "|efetch -db nucleotide -format fasta"
 			ff = ".nuc.fa"
-else:
-	if protein_nt(db): 
-		if yes_no(complete):
+else:		# if gene is not empty 
+	if protein_nt(db):  		# if user choose protein database
+		if yes_no(complete):		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tGene:",gene,"\n\tDatabase: protein","\n\tInclude partial/incomplete: Yes")
 			es = "esearch -db protein -query \" "+ organism +"[organism] AND " + gene +"[Gene name] \" "
 			ef = "|efetch -db protein -format fasta"
 			ff = ".prot.fa"
-		else:
+		else:		# if user choose to not include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tGene:",gene,"\n\tDatabase: protein","\n\tInclude partial/incomplete: No")
 			es = "esearch -db protein -query \" "+ organism +"[organism] AND " + gene +"[Gene name] Not partial \" "
 			ef = "|efetch -db protein -format fasta"
 			ff = ".prot.fa"
-	else:
-		if yes_no(complete):
+	else: 		# if user choose nucleotide database
+		if yes_no(complete):		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tGene:",gene,"\n\tDatabase: nucleotide","\n\tInclude partial/incomplete: Yes")
 			es = "esearch -db nucleotide -query \" "+ organism +"[Organism] AND " + gene +"[Gene name] Not partial \" "
 			ef = "|efetch -db nucleotide -format fasta"
 			ff = ".nuc.fa"
-		else:
+		else:		# if user choose to include partial search
 			print("\n Search will be done on following information:\n\tOrganism:",organism,"\n\tGene:",gene,"\n\tDatabase: nucleotide","\n\tInclude partial/incomplete: No")
 			es = "esearch -db nucleotide -query \" "+ organism +"[Organism] AND " + gene +"[Gene name] Not partial \" "
 			ef = "|efetch -db nucleotide -format fasta"
@@ -106,14 +106,14 @@ else:
 
 def search(organism,gene,db,complete):
 	if es:
-		es_number = es + "|grep -i \"count\"|awk \'{split($0,a,\"<|>\");print a[3];}\'"
+		es_number = es + "|grep -i \"count\"|awk \'{split($0,a,\"<|>\");print a[3];}\'" 		# grep and awk to get esearch result number
 		print("\n This is what is running in shell: \n\n " + es + "\n\n Please wait... \n")
-		seq_number = subprocess.check_output(es_number,shell=True)
-		if int(seq_number) > 1000:
+		seq_number = subprocess.check_output(es_number,shell=True)		# get the search result number from shell 
+		if int(seq_number) > 1000:		# if search result is over 1000, print warning message, end the script
 			print("\n ** Warning: Over 1000 sequences found, continue is not recommended, please narrow down your search,"+ \
 				"\n otherwise very slow processing speed and probably taking too much space! Thank you! \n")
 			quit()
-		if int(seq_number) == 0:
+		if int(seq_number) == 0:		# if search result is 0, print warning message, end the script
 			print("\n Sorry, no sequence was found! Likely spelling mistakes. Please try again. Thank you! \n")
 			quit()
 		else:
@@ -145,7 +145,9 @@ def search(organism,gene,db,complete):
 				print("\n Thank you for searching! Bye! \n")
 				quit()				
 
+## function to check how many species there are if protein sequences were downloaded
 def species_number(organism):
+	# file name 
 	dow_file_name = '_'.join(organism.split())
 	# only carry on if the file exists
 	if os.path.isfile(dow_file_name + ".prot.fa"):
@@ -161,32 +163,47 @@ def species_number(organism):
 			#print species count and ask if user want to continue or not
 			print("\n Sequences are from " + str(len(genus))+ " different genera and there are " + str(len(spe)) + " different species in total. Do you wish to continue? \n")
 			answer = input(" Please respond yes or no. ")
+			if yes_no(answer)==False :
+				print("\n Thank you for searching! Bye! \n")
 		else:
 			print("\n Sequences are from the same species " + str(spe[0].strip("[]")) + ". ")
 			
-
+##function to make blast database
 def blastdb(organism,gene,db,complete):
+	# downloaded file name
 	dow_file_name = '_'.join(organism.split())
+	# check the file exists
 	if os.path.isfile(dow_file_name + ff):
+		# ask user for answer
 		blast_q = input("\n------\n Do you wish to make a BLAST database based on downloaded sequences? \n\n Please respond yes or no. ")
+		# evaluate answer by yew_no function, carry on if yes
 		if yes_no(blast_q):
+			# if nucleotide database
 			if ff == ".nuc.fa":
 				print("\n------\n Preparing a nucleotide database... ") 
+				# make database in shell
 				database= "makeblastdb -in " + dow_file_name + ff +" -dbtype nucl -out " + dow_file_name
 				subprocess.call(database,shell=True)
+				# check output and print success message
 				if os.path.isfile(dow_file_name + ".nhr"):
 					print("\n------\n Nucleotide database has been successfully made! \n\n Nucleotide sequence headers are in " + dow_file_name + ".nhr file.\n Nucleotide indexes are in " + dow_file_name + ".nin file.\n Compressed nucleotide sequences are in " + dow_file_name + ".nsq file.\n")
-			else:
+			else:	# if protein database
 				print("\n------\n Preparing a protein database... ") 
+				# make database in shell
 				database= "makeblastdb -in " + dow_file_name + ff +" -dbtype prot -out " + dow_file_name
 				subprocess.call(database,shell=True)
+				# check output and print success message
 				if os.path.isfile(dow_file_name + ".phr"):
 					print("\n------\n Protein database has been successfully made! \n\n Protein sequence headers are in " + dow_file_name + ".phr file.\n Protein indexes are in " + dow_file_name + ".pin file.\n Compressed protein sequences are in " + dow_file_name + ".psq file.\n")
+		#  user does not want a database
 		else:
 			print("\n Sorry to know that you do not want a database. Bye! \n") 
-			
+
+## function to do blast analysis			
 def blast(organism,gene,db,complete):
+	# downloaded file name
 	dow_file_name = '_'.join(organism.split())
+	# only carry on if a database is made
 	if os.path.isfile(dow_file_name + ".nhr") or os.path.isfile(dow_file_name + ".phr"):
 		blast_in = input("\n------\n Do you wish to do BLAST within the downloaded search results to find the most similar sequences?\n Please answer yes or no ")
 		if yes_no(blast_in):
