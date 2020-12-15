@@ -22,7 +22,7 @@ details["complete"] = input ("\n Do you want to include partial/incomplete resul
 
 ## yes and no function which return True or False to use for conditions 
 def yes_no(answer):
-	yes = set(['yes','y'])		# both yes or y will return True
+	yes = set(['yes','y'])		# yes and y are put into a set; both yes or y will return True
 	no = set(['no','n']) 		# both no or n will return False
 	choice = answer.lower()		# set all types of answer to lower case
 	# loop forever until something is returned
@@ -37,14 +37,14 @@ def yes_no(answer):
 
 ## function which return True or False to use for conditions 
 def protein_nt(answer):
-	yes = set(['protein','p'])		# both protein or p will return True
-	no = set(['nucleotide','n']) 		# both nucleotide or n will return False
+	prot = set(['protein','p'])		# both protein or p will return True
+	nucl = set(['nucleotide','n']) 		# both nucleotide or n will return False
 	choice = answer.lower()		# set all types of answer to lower case
 	# loop forever until something is returned
 	while True:		
-		if choice in yes:		# both yes or y will return True
+		if choice in prot:		# both yes or y will return True
 			return True
-		elif choice in no:		# both no or n will return False
+		elif choice in nucl:		# both no or n will return False
 			return False
 		else:					# error trap, all other input will cause the function to ask "yes or no" over and over until a desired answer is received
 			print ("\n Please respond with 'p' or 'n' \n")
@@ -284,8 +284,37 @@ def blast(organism,gene,db,complete):
 			
 		blast_ex = input("\n------\n Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.\n Please answer yes or no ")
 		if yes_no(blast_ex):
-			if ff == ".nuc.fa":
-				print('ok')
+			if blast_ex.endswith(('fasta','fa')):
+				if os.path.isfile('./' + blast_ex): 
+					if ff == ".nuc.fa":
+						print("\n Your local file will be blast against the nucleotide database made in earlier step.\n")
+						file_contents = open(blast_ex).read()
+						count = file_contents.count('>')
+						print("\n File loaded successfully, your file contains " + count + " sequences \n " )
+						p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
+						if protein_nt(p_or_n):
+							print("\n Your protein sequences will be blast against the nucleotide database using tblastn \n ")
+							
+						else:
+							print("\n Your nucleotide sequences will be blast against the nucleotide database using blastn \n ")
+							
+					else:
+						print("\n Your local file will be blast against the protein database made in earlier step.\n")
+						file_contents = open(blast_ex).read()
+						count = file_contents.count('>')
+						print("\n File loaded successfully, your file contains " + count + " sequences \n ")
+						p_or_n = input("\n Do your file contains protein sequences or nucleotide sequences? \n Please answer p or n ")
+						if protein_nt(p_or_n):
+							print("\n Your protein sequences will be blast against the protein database using blastp \n ")
+							
+						else:
+							print("\n Your nucleotide sequences will be blast against the protein database using blastx \n ")
+							
+				else:
+					print("\n Your file is not in the same directory with the script. Analysis cannot be done, sorry! \n ")  	
+			else:
+				print("\n The file is wrong format. Analysis cannot be done, sorry! \n ")
+
 search(*list(details.values()))
 species_number(list(details.values())[0])
 blastdb(*list(details.values()))
