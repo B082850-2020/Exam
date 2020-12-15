@@ -11,7 +11,6 @@ from Bio.Seq import Seq
 import pandas as pd
 from Bio import SeqIO
 
-from Bio import Entrez
 
 
 ## user input will be put in a library 
@@ -163,56 +162,130 @@ def species_number(organism):
 			print("\n Sequences are from " + str(len(genus))+ " different genera and there are " + str(len(spe)) + " different species in total. Do you wish to continue? \n")
 			answer = input(" Please respond yes or no. ")
 		else:
-			print("\n Sequences are from the same species " + str(spe) + ". ")
+			print("\n Sequences are from the same species " + str(spe[0].strip("[]")) + ". ")
 			
 
 def blastdb(organism,gene,db,complete):
 	dow_file_name = '_'.join(organism.split())
 	if os.path.isfile(dow_file_name + ff):
-		blast_q = input(" Do you wish to make a BLAST database based on downloaded sequences? \n\n Please respond yes or no. ")
+		blast_q = input("\n------\n Do you wish to make a BLAST database based on downloaded sequences? \n\n Please respond yes or no. ")
 		if yes_no(blast_q):
 			if ff == ".nuc.fa":
-				print(" Preparing a nucleotide database... ") 
+				print("\n------\n Preparing a nucleotide database... ") 
 				database= "makeblastdb -in " + dow_file_name + ff +" -dbtype nucl -out " + dow_file_name
 				subprocess.call(database,shell=True)
 				if os.path.isfile(dow_file_name + ".nhr"):
-					print(" Nucleotide database has been successfully made! \n Nucleotide sequence headers are in " + dow_file_name + ".nhr \n Nucleotide indexes are in " + dow_file_name + ".nin \n Compressed nucleotide sequences are in " + dow_file_name + ".nsq \n")
+					print("\n------\n Nucleotide database has been successfully made! \n\n Nucleotide sequence headers are in " + dow_file_name + ".nhr file.\n Nucleotide indexes are in " + dow_file_name + ".nin file.\n Compressed nucleotide sequences are in " + dow_file_name + ".nsq file.\n")
 			else:
-				print(" Preparing a protein database... ") 
+				print("\n------\n Preparing a protein database... ") 
 				database= "makeblastdb -in " + dow_file_name + ff +" -dbtype prot -out " + dow_file_name
 				subprocess.call(database,shell=True)
 				if os.path.isfile(dow_file_name + ".phr"):
-					print(" Protein database has been successfully made! \n Protein sequence headers are in " + dow_file_name + ".phr \n Protein indexes are in " + dow_file_name + ".pin \n Compressed protein sequences are in " + dow_file_name + ".psq \n")
-
+					print("\n------\n Protein database has been successfully made! \n\n Protein sequence headers are in " + dow_file_name + ".phr file.\n Protein indexes are in " + dow_file_name + ".pin file.\n Compressed protein sequences are in " + dow_file_name + ".psq file.\n")
+		else:
+			print("\n Sorry to know that you do not want a database. Bye! \n") 
+			
 def blast(organism,gene,db,complete):
 	dow_file_name = '_'.join(organism.split())
 	if os.path.isfile(dow_file_name + ".nhr") or os.path.isfile(dow_file_name + ".phr"):
-		blast_in = input(" Do you wish to do BLAST within the downloaded search results to find the most similar sequences?)
-		if yes_no(input):
+		blast_in = input("\n------\n Do you wish to do BLAST within the downloaded search results to find the most similar sequences?\n Please answer yes or no ")
+		if yes_no(blast_in):
 			if ff == ".nuc.fa":
 				records = SeqIO.parse("./"+ dow_file_name + ".nuc.fa","fasta")
-				for i in records:
-					acc = i.id
-					single_seq = open('single_seq.fasta', 'w')
-					single_seq.write(i.seq)
-					single_seq.close()
-					blastn = "blastn -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >>blast.out"	
-					subprocess.call(blastn,shell=True)
-					grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out >> blast.tsv"
-					subprocess.call(grep,shell=True)
-					change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
-					subprocess.call(change,shell=True)
-				df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
-				df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
-				df1.sort_values(['e_value','bit score'], ascending=False, inplace=True)
-				df1.to_csv(r'./hitresult.csv',sep='\t')
-				if df1:
-					print(" Dataframe containing all hit results is ready in hitresult.csv ")
+				hit_number = input("\n How many top hits would you like for each sequence? ")
+				if str(hit_number) == '0' or str.isspace(str(hit_number)) or str(hit_number).isdigit()== False:
+					print("\n The input is invalid. Resetting value to 10... \n")
+					print("\n Processing blastn analysis... Please wait....\n ") 
+					hit_number = 10 
+					for i in records:
+						acc = i.id
+						single_seq = open('single_seq.fasta', 'w')
+						single_seq.write(str(i.seq))
+						single_seq.close()
+						blastn = "blastn -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >> blast.out"	
+						subprocess.call(blastn,shell=True)
+						grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out | head -n" + str(hit_number) + ">> blast.tsv"
+						subprocess.call(grep,shell=True)
+						change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
+						subprocess.call(change,shell=True)
+					df1 = None
+					df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+					df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+					df1.sort_values(['e_value','bit score'], ascending=True, inplace=True)
+					df1.to_csv(r'./hitresult.csv',sep='\t')
+					if df1 is not None:
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity of sequences is the highest at the top. \n")
+				else:
+					print("\n Processing blastn analysis... Please wait....\n ") 
+					for i in records:
+						acc = i.id
+						single_seq = open('single_seq.fasta', 'w')
+						single_seq.write(str(i.seq))
+						single_seq.close()
+						blastn = "blastn -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >> blast.out"	
+						subprocess.call(blastn,shell=True)
+						grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out | head -n" + str(int(hit_number)) + ">> blast.tsv"
+						subprocess.call(grep,shell=True)
+						change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
+						subprocess.call(change,shell=True)
+					df1 = None
+					df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+					df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+					df1.sort_values(['e_value','bit score'], ascending=True, inplace=True)
+					df1.to_csv(r'./hitresult.csv',sep='\t')
+					if df1 is not None:
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")
 			else:
-				print(" Protein BLAST analysis can be done similarly as nucleotide but using blastp instead of blastn"
+				print("\n Protein BLAST analysis can be done similarly as nucleotide but using blastp instead of blastn \n")
+				records = SeqIO.parse("./"+ dow_file_name + ".prot.fa","fasta")
+				hit_number = input("\n How many top hits would you like for each sequence? ")
+				if str(hit_number) == '0' or str.isspace(str(hit_number)) or str(hit_number).isdigit()== False:
+					print("\n The input is invalid. Resetting value to 10... \n")
+					print("\n Processing blastp analysis... Please wait....\n ") 
+					hit_number = 10 
+					for i in records:
+						acc = i.id
+						single_seq = open('single_seq.fasta', 'w')
+						single_seq.write(str(i.seq))
+						single_seq.close()
+						blastn = "blastp -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >> blast.out"	
+						subprocess.call(blastn,shell=True)
+						grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out | head -n" + str(hit_number) + ">> blast.tsv"
+						subprocess.call(grep,shell=True)
+						change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
+						subprocess.call(change,shell=True)
+					df1 = None
+					df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+					df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+					df1.sort_values(['e_value','bit score'], ascending=True, inplace=True)
+					df1.to_csv(r'./hitresult.csv',sep='\t')
+					if df1 is not None:
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity of sequences is the highest at the top. \n")
+				else:
+					print("\n Processing blastp analysis... Please wait....\n ") 
+					for i in records:
+						acc = i.id
+						single_seq = open('single_seq.fasta', 'w')
+						single_seq.write(str(i.seq))
+						single_seq.close()
+						blastn = "blastp -db " + dow_file_name + " -query single_seq.fasta -outfmt 7 >> blast.out"	
+						subprocess.call(blastn,shell=True)
+						grep = "grep -v \"#\\|" + str(acc) + '" ' + " blast.out | head -n" + str(int(hit_number)) + ">> blast.tsv"
+						subprocess.call(grep,shell=True)
+						change = "sed -i \'s/Query_1/" + str(acc) + "/g\' blast.tsv"
+						subprocess.call(change,shell=True)
+					df1 = None
+					df1 = pd.read_csv('./blast.tsv',sep="\t",header=None)
+					df1.columns=['query acc.', 'subject acc.', '% identity', 'alignment length', 'mismatches', 'gap opens', 'q. start', 'q. end', 's. start', 's. end', 'e_value', 'bit score']
+					df1.sort_values(['e_value','bit score'], ascending=True, inplace=True)
+					df1.to_csv(r'./hitresult.csv',sep='\t')
+					if df1 is not None:
+						print("\n Dataframe containing all hit results is ready in hitresult.csv file, the similarity is the highest for comparison sequences at the top. \n")				
 			
-		print(" Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.")
-		
+		blast_ex = input("\n------\n Do you wish to do a BLAST analysis with your local sequence file? Please note only FASTA file is accepted.\n Please answer yes or no ")
+		if yes_no(blast_ex):
+			if ff == ".nuc.fa":
+				print('ok')
 search(*list(details.values()))
 species_number(list(details.values())[0])
 blastdb(*list(details.values()))
